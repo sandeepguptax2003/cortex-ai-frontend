@@ -1,0 +1,22 @@
+{
+    "typescript.autoClosingTags": false,
+    "typescript.validate.enable": true,
+    "javascript.validate.enable": true,
+    "eslint.enable": false,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.preferences.quoteStyle": "single",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "never"
+    },
+    "eslint.run": "onSave",
+    "eslint.options": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+    },
+    "typescript.tsserver.log": "off",
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    }
+}
