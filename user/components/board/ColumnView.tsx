@@ -1,1 +1,0 @@
-// Column view component

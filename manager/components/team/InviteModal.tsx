@@ -1,1 +1,0 @@
-// Invite modal component

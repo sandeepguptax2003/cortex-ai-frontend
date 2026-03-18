@@ -1,1 +1,0 @@
-// Ticket card component
