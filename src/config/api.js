@@ -2,19 +2,19 @@
 // Change this URL to switch between environments
 
 const API_CONFIG = {
-  // Development
+  // Development — reads from .env.local (NEXT_PUBLIC_API_URL)
   development: {
-    baseURL: "http://localhost:5572",
-    wsURL: "ws://localhost:5572",
+    baseURL: process.env.NEXT_PUBLIC_API_URL || "https://rq6ypa7pyw.ap-south-1.awsapprunner.com",
+    wsURL: process.env.NEXT_PUBLIC_WS_URL || "wss://rq6ypa7pyw.ap-south-1.awsapprunner.com",
   },
-  // Production (AWS)
+  // Production (AWS Amplify) — reads from Amplify environment variables
   production: {
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "https://hvma0g3wqf.execute-api.ap-south-1.amazonaws.com/prod",
-    wsURL: process.env.NEXT_PUBLIC_WS_URL || "wss://p13e17k7ka.execute-api.ap-south-1.amazonaws.com/prod",
+    baseURL: process.env.NEXT_PUBLIC_API_URL || "https://rq6ypa7pyw.ap-south-1.awsapprunner.com",
+    wsURL: process.env.NEXT_PUBLIC_WS_URL || "wss://rq6ypa7pyw.ap-south-1.awsapprunner.com",
   },
 };
 
-// Current environment - change this to switch
+// Current environment
 const ENV = process.env.NODE_ENV === "production" ? "production" : "development";
 
 // Export config
