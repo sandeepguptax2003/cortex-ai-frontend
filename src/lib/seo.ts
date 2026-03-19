@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 export const siteConfig = {
   name: "Cortex AI",
   description:
@@ -27,7 +29,7 @@ export const siteConfig = {
   publisher: "Cortex AI",
 };
 
-export const defaultMetadata = {
+export const defaultMetadata: Metadata = {
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
@@ -174,10 +176,10 @@ export const structuredData = {
       },
       {
         "@type": "Question",
-        name: "Is there a free trial?",
+        name: "Is this free to use?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes! Cortex AI offers a free 14-day trial with full access to all features. No credit card required.",
+          text: "Yes! Cortex AI is completely free and open-source.",
         },
       },
     ],

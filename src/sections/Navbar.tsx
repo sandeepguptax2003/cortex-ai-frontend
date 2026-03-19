@@ -85,7 +85,7 @@ export function Navbar() {
 
             <Link href="/signup">
               <Button size="sm" className="btn-shine">
-                Start Free Trial
+                Sign Up
               </Button>
             </Link>
           </div>
@@ -129,7 +129,7 @@ export function Navbar() {
                 </Button>
               </Link>
               <Link href="/signup" className="flex-1">
-                <Button className="w-full btn-shine">Start Free Trial</Button>
+                <Button className="w-full btn-shine">Sign Up</Button>
               </Link>
             </div>
           </div>

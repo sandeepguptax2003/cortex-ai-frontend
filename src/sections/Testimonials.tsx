@@ -7,51 +7,51 @@ import { Quote } from "lucide-react";
 const testimonials = [
   {
     quote:
-      "Cortex AI has completely transformed how our team handles meetings. We went from missing 30% of action items to capturing everything automatically.",
-    author: "Sarah Chen",
-    role: "VP of Engineering",
-    company: "TechCorp",
-    avatar: "SC",
+      "This is a dummy testimonial. Cortex AI has completely transformed how our team handles meetings. We went from missing 30% of action items to capturing everything automatically.",
+    author: "Jane Doe",
+    role: "User",
+    company: "DummyCorp",
+    avatar: "JD",
   },
   {
     quote:
-      "The AI is incredibly accurate. It not only extracts tasks but suggests the right assignee and realistic deadlines. It's like having a smart assistant.",
-    author: "Michael Rodriguez",
-    role: "Product Manager",
-    company: "StartupXYZ",
-    avatar: "MR",
+      "This is another dummy quote. The AI is incredibly accurate. It not only extracts tasks but suggests the right assignee and realistic deadlines. It's like having a smart assistant.",
+    author: "John Smith",
+    role: "Tester",
+    company: "TestXYZ",
+    avatar: "JS",
   },
   {
     quote:
-      "We save 5+ hours per week on meeting follow-ups. The Slack integration keeps everyone in the loop without any extra effort.",
-    author: "Emily Watson",
-    role: "Team Lead",
-    company: "InnovateCo",
-    avatar: "EW",
+      "Dummy text. We save 5+ hours per week on meeting follow-ups. The Slack integration keeps everyone in the loop without any extra effort.",
+    author: "Alice Bob",
+    role: "Member",
+    company: "ExampleCo",
+    avatar: "AB",
   },
   {
     quote:
-      "The analytics dashboard gives us insights we never had before. We can see bottlenecks and optimize our workflow.",
-    author: "David Kim",
-    role: "CTO",
-    company: "ScaleUp Inc",
-    avatar: "DK",
+      "Dummy response. The analytics dashboard gives us insights we never had before. We can see bottlenecks and optimize our workflow.",
+    author: "Test User",
+    role: "Developer",
+    company: "Localhost Inc",
+    avatar: "TU",
   },
   {
     quote:
-      "Best investment we've made this year. The ROI was visible within the first month. Our team is more productive than ever.",
-    author: "Lisa Thompson",
-    role: "Operations Director",
-    company: "GrowthLabs",
-    avatar: "LT",
+      "Dummy review. Best investment we've made this year. The ROI was visible within the first month. Our team is more productive than ever.",
+    author: "Dummy Name",
+    role: "Director",
+    company: "SampleLabs",
+    avatar: "DN",
   },
   {
     quote:
-      "The Chrome extension works flawlessly with Zoom. Setup took 2 minutes and we were extracting tasks immediately.",
-    author: "James Wilson",
-    role: "Engineering Manager",
-    company: "DevStudio",
-    avatar: "JW",
+      "Placeholder text. The Chrome extension works flawlessly with Zoom. Setup took 2 minutes and we were extracting tasks immediately.",
+    author: "Demo Account",
+    role: "Manager",
+    company: "DemoStudio",
+    avatar: "DA",
   },
 ];
 

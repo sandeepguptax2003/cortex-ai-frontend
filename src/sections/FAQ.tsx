@@ -24,7 +24,7 @@ const faqs = [
   {
     question: "Is there a free trial?",
     answer:
-      "Yes! We offer a 14-day free trial of our Pro plan with full access to all features. No credit card required. After the trial, you can choose to upgrade or continue with our free Starter plan.",
+      "Everything is completely free and open-source! This is a hackathon project, so there are no paid plans.",
   },
   {
     question: "How secure is my data?",
@@ -44,7 +44,7 @@ const faqs = [
   {
     question: "Do you offer enterprise plans?",
     answer:
-      "Yes, we offer custom Enterprise plans with SSO/SAML, advanced security features, dedicated support, SLA guarantees, and on-premise deployment options. Contact our sales team for a custom quote.",
+      "No, this is currently just an open-source project. Everything is free to use and explore.",
   },
 ];
 
@@ -113,13 +113,13 @@ export function FAQ() {
         <FadeIn direction="up" delay={400}>
           <div className="mt-12 text-center">
             <p className="text-slate-600 dark:text-slate-400 mb-4">
-              Still have questions?
+              Connect with us?
             </p>
             <a
-              href="mailto:support@cortex-ai.com"
+              href="#"
               className="text-violet-600 hover:text-violet-700 font-medium"
             >
-              Contact our support team →
+              Reach out to our team →
             </a>
           </div>
         </FadeIn>

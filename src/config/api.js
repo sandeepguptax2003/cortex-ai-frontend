@@ -1,25 +1,10 @@
-// Central API Configuration
-// Change this URL to switch between environments
+// For Production
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://rq6ypa7pyw.ap-south-1.awsapprunner.com";
+export const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || "wss://rq6ypa7pyw.ap-south-1.awsapprunner.com";
 
-const API_CONFIG = {
-  // Development — reads from .env.local (NEXT_PUBLIC_API_URL)
-  development: {
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "https://rq6ypa7pyw.ap-south-1.awsapprunner.com",
-    wsURL: process.env.NEXT_PUBLIC_WS_URL || "wss://rq6ypa7pyw.ap-south-1.awsapprunner.com",
-  },
-  // Production (AWS Amplify) — reads from Amplify environment variables
-  production: {
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "https://rq6ypa7pyw.ap-south-1.awsapprunner.com",
-    wsURL: process.env.NEXT_PUBLIC_WS_URL || "wss://rq6ypa7pyw.ap-south-1.awsapprunner.com",
-  },
-};
-
-// Current environment
-const ENV = process.env.NODE_ENV === "production" ? "production" : "development";
-
-// Export config
-export const API_BASE_URL = API_CONFIG[ENV].baseURL;
-export const WS_BASE_URL = API_CONFIG[ENV].wsURL;
+// For Development
+// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// export const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
 
 // API Endpoints
 export const ENDPOINTS = {
@@ -98,5 +83,3 @@ export const ENDPOINTS = {
     COMMAND: "/ai/command",
   },
 };
-
-export default API_CONFIG;

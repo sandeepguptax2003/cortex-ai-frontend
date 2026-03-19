@@ -29,7 +29,7 @@ export function CTA() {
             <div className="relative text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-medium mb-6">
                 <Sparkles className="w-4 h-4" />
-                <span>Start your free trial today</span>
+                <span>Join our open source project</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
@@ -57,7 +57,7 @@ export function CTA() {
               </div>
 
               <p className="mt-6 text-sm text-white/60">
-                No credit card required • 14-day free trial • Cancel anytime
+                Free to use • Open Source • Community Driven
               </p>
             </div>
           </div>

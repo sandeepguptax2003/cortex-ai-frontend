@@ -7,38 +7,38 @@ import { Twitter, Linkedin, Github, Youtube } from "lucide-react";
 const footerLinks = {
   Product: [
     { label: "Features", href: "#features" },
+    { label: "How it Works", href: "#how-it-works" },
     { label: "Pricing", href: "#pricing" },
-    { label: "Integrations", href: "#integrations" },
-    { label: "Changelog", href: "/changelog" },
-    { label: "Roadmap", href: "/roadmap" },
+    { label: "Changelog", href: "/404" },
+    { label: "Roadmap", href: "/404" },
   ],
   Company: [
-    { label: "About", href: "/about" },
-    { label: "Blog", href: "/blog" },
-    { label: "Careers", href: "/careers" },
-    { label: "Press", href: "/press" },
-    { label: "Contact", href: "/contact" },
+    { label: "About", href: "/404" },
+    { label: "Blog", href: "/404" },
+    { label: "Careers", href: "/404" },
+    { label: "Press", href: "/404" },
+    { label: "Contact", href: "/404" },
   ],
   Resources: [
-    { label: "Documentation", href: "/docs" },
-    { label: "API Reference", href: "/api" },
-    { label: "Guides", href: "/guides" },
-    { label: "Community", href: "/community" },
-    { label: "Support", href: "/support" },
+    { label: "Documentation", href: "/404" },
+    { label: "API Reference", href: "/404" },
+    { label: "Guides", href: "/404" },
+    { label: "Community", href: "/404" },
+    { label: "Support", href: "/404" },
   ],
   Legal: [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
-    { label: "Security", href: "/security" },
-    { label: "Cookies", href: "/cookies" },
+    { label: "Privacy", href: "/404" },
+    { label: "Terms", href: "/404" },
+    { label: "Security", href: "/404" },
+    { label: "Cookies", href: "/404" },
   ],
 };
 
 const socialLinks = [
-  { icon: Twitter, href: "https://twitter.com/cortexai", label: "Twitter" },
-  { icon: Linkedin, href: "https://linkedin.com/company/cortexai", label: "LinkedIn" },
-  { icon: Github, href: "https://github.com/cortexai", label: "GitHub" },
-  { icon: Youtube, href: "https://youtube.com/cortexai", label: "YouTube" },
+  { icon: Twitter, href: "/404", label: "Twitter" },
+  { icon: Linkedin, href: "/404", label: "LinkedIn" },
+  { icon: Github, href: "/404", label: "GitHub" },
+  { icon: Youtube, href: "/404", label: "YouTube" },
 ];
 
 export function Footer() {
@@ -100,19 +100,19 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-6">
               <Link
-                href="/privacy"
+                href="/404"
                 className="text-sm text-slate-500 hover:text-violet-600 transition-colors"
               >
                 Privacy Policy
               </Link>
               <Link
-                href="/terms"
+                href="/404"
                 className="text-sm text-slate-500 hover:text-violet-600 transition-colors"
               >
                 Terms of Service
               </Link>
               <Link
-                href="/cookies"
+                href="/404"
                 className="text-sm text-slate-500 hover:text-violet-600 transition-colors"
               >
                 Cookies

@@ -55,7 +55,7 @@ export function Hero() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
                 <Link href="/signup">
                   <Button size="lg" className="btn-shine text-base px-8">
-                    Start Free Trial
+                    Sign Up
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
@@ -79,7 +79,7 @@ export function Hero() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-violet-500" />
-                  <span>14-day free trial</span>
+                  <span>100% Free & Open Source</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-violet-500" />

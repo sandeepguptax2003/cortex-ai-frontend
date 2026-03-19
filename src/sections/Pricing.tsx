@@ -11,7 +11,7 @@ const plans = [
     name: "Starter",
     description: "Perfect for small teams getting started",
     price: 0,
-    period: "forever",
+    period: "forever (open source)",
     features: [
       "Up to 5 team members",
       "50 tasks per month",
@@ -26,8 +26,8 @@ const plans = [
   {
     name: "Pro",
     description: "For growing teams that need more power",
-    price: 29,
-    period: "per user/month",
+    price: 0,
+    period: "totally free",
     features: [
       "Unlimited team members",
       "Unlimited tasks",
@@ -37,15 +37,15 @@ const plans = [
       "Priority support",
       "Custom workflows",
     ],
-    cta: "Start Free Trial",
+    cta: "Sign Up",
     href: "/signup",
     popular: true,
   },
   {
     name: "Enterprise",
     description: "For organizations with advanced needs",
-    price: null,
-    period: "Custom pricing",
+    price: 0,
+    period: "Also free",
     features: [
       "Everything in Pro",
       "SSO & SAML",
@@ -110,11 +110,14 @@ export function Pricing() {
                 <div className="mb-6">
                   {plan.price !== null ? (
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">${plan.price}</span>
+                      <span className="text-4xl font-bold">₹{plan.price}</span>
                       <span className="text-slate-500">{plan.period}</span>
                     </div>
                   ) : (
-                    <div className="text-2xl font-bold">{plan.period}</div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">₹{plan.price}</span>
+                      <span className="text-slate-500">{plan.period}</span>
+                    </div>
                   )}
                 </div>
 
@@ -151,10 +154,10 @@ export function Pricing() {
         <FadeIn direction="up" delay={400}>
           <div className="mt-16 text-center">
             <p className="text-sm text-slate-500 mb-4">
-              Trusted by 500+ teams worldwide
+              May be trusted by teams in the future
             </p>
             <div className="flex flex-wrap justify-center gap-8 opacity-50">
-              {["Google", "Microsoft", "Amazon", "Slack", "Notion"].map(
+              {["DummyCorp", "TestXYZ", "ExampleCo", "Localhost Inc", "SampleLabs"].map(
                 (company) => (
                   <span
                     key={company}
