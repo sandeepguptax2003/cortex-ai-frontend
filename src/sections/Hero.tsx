@@ -30,7 +30,7 @@ export function Hero() {
             <FadeIn direction="up" delay={0}>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 text-sm font-medium mb-6">
                 <Sparkles className="w-4 h-4" />
-                <span>Powered by Amazon Bedrock AI</span>
+                <span>Powered by Cortex AI</span>
               </div>
             </FadeIn>
 

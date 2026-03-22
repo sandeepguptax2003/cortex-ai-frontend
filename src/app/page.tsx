@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { generatePageMetadata } from "@/lib/seo";
 import { SessionExpiredToast } from "@/components/shared/SessionExpiredToast";
+import { AuthRedirect } from "@/components/shared/AuthRedirect";
 import { Navbar } from "@/sections/Navbar";
 import { Hero } from "@/sections/Hero";
 import { Features } from "@/sections/Features";
@@ -23,6 +24,7 @@ export default function HomePage() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       <SessionExpiredToast />
+      <AuthRedirect />
       {/* Background Effects */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />

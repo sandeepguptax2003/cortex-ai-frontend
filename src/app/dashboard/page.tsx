@@ -55,7 +55,7 @@ export default function DashboardPage() {
   });
 
   const analytics = analyticsData?.data;
-  const myTickets = myTicketsData?.data?.tickets?.slice(0, 5) || [];
+  const myTickets = myTicketsData?.data?.tickets || [];
   const overdueTickets = overdueData?.data?.tickets?.slice(0, 5) || [];
   const recentMeetings = meetingsData?.data?.meetings?.slice(0, 3) || [];
 
@@ -122,13 +122,13 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Link href="/meetings">
+            <Link href="/meetings?action=start">
               <Button variant="outline" className="gap-2">
                 <Video className="w-4 h-4" />
                 Start Meeting
               </Button>
             </Link>
-            <Link href="/board">
+            <Link href="/board?action=create">
               <Button className="gap-2 btn-shine">
                 <Plus className="w-4 h-4" />
                 New Ticket
@@ -179,7 +179,7 @@ export default function DashboardPage() {
                   <p>No tickets assigned to you</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: "360px" }}>
                   {myTickets.map((ticket: any) => (
                     <div
                       key={ticket.ticketId}

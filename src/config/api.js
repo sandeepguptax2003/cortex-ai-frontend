@@ -12,6 +12,8 @@ export const ENDPOINTS = {
   AUTH: {
     SIGNUP: "/auth/user/signup",
     LOGIN: "/auth/user/login",
+    LOGOUT: "/auth/user/logout",
+    REFRESH_TOKEN: "/auth/user/refresh-token",
     PROFILE: "/auth/user/profile",
     PASSWORD: "/auth/user/password",
     PROFILE_PICTURE: "/auth/user/profile-picture",

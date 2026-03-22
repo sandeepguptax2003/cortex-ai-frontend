@@ -56,7 +56,7 @@ const plans = [
       "On-premise option",
     ],
     cta: "Contact Sales",
-    href: "#",
+    href: "/signup",
     popular: false,
   },
 ];

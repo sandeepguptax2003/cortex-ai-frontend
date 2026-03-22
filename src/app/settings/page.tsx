@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganisation } from "@/hooks/useOrganisation";
@@ -29,6 +29,7 @@ import { FadeIn } from "@/components/animations/FadeIn";
 import { api } from "@/lib/api/client";
 import { useToast } from "@/components/ui/Toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   User,
   Building2,
@@ -43,43 +44,49 @@ import {
   MessageSquare,
   Calendar,
   Ticket,
-  Copy,
-  Puzzle,
 } from "lucide-react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function SettingsPage() {
-  const { user, refreshUser, accessToken, updateUser } = useAuth();
+  const { user, refreshUser, updateUser } = useAuth();
   const { organisation: org } = useOrganisation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [tokenCopied, setTokenCopied] = useState(false);
-
-  const handleCopyToken = () => {
-    const token = accessToken || (typeof window !== 'undefined' ? sessionStorage.getItem('cortex_at') : null);
-    if (!token) {
-      toast({ title: 'No token available', description: 'Please log out and log back in to get your token.', variant: 'error' });
-      return;
-    }
-    navigator.clipboard.writeText(token);
-    setTokenCopied(true);
-    toast({ title: 'Token copied!', description: 'Paste it into the Chrome extension settings under Auth Token.', variant: 'success' });
-    setTimeout(() => setTokenCopied(false), 3000);
-  };
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
   });
+  const profileDirty = profileData.name.trim() !== (user?.name || "").trim();
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [passwordData, setPasswordData] = useState({
     current: "",
     new: "",
     confirm: "",
   });
+  const [orgData, setOrgData] = useState({
+    name: org?.name || "",
+    domain: org?.domain || "",
+  });
+  const orgDirty =
+    orgData.name.trim() !== (org?.name || "").trim() ||
+    orgData.domain.trim() !== (org?.domain || "").trim();
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({ name: user.name || "" });
+    }
+  }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (org) {
+      setOrgData({ name: org.name || "", domain: org.domain || "" });
+    }
+  }, [org]);
 
   // Notification preferences
   const [notifications, setNotifications] = useState({
@@ -166,6 +173,25 @@ export default function SettingsPage() {
       toast({
         title: "Error",
         description: "Failed to delete account. Please try again.",
+        variant: "error",
+      });
+    },
+  });
+
+  const updateOrgMutation = useMutation({
+    mutationFn: (data: { name?: string; domain?: string }) =>
+      api.updateOrganisation(data),
+    onSuccess: () => {
+      toast({
+        title: "Organization updated",
+        description: "Organization settings have been saved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["organisation"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update organization. Please try again.",
         variant: "error",
       });
     },
@@ -331,6 +357,7 @@ export default function SettingsPage() {
                   <Button
                     type="submit"
                     isLoading={updateProfileMutation.isPending}
+                    disabled={!profileDirty || updateProfileMutation.isPending}
                   >
                     <Check className="w-4 h-4 mr-2" />
                     Save Changes
@@ -539,12 +566,22 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Organization Name</Label>
-                    <Input value={org?.name || ""} disabled className="bg-slate-50" />
+                    <Label htmlFor="org-name">Organization Name</Label>
+                    <Input
+                      id="org-name"
+                      value={orgData.name}
+                      onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
+                      placeholder="Your organization name"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Organization Domain</Label>
-                    <Input value={org?.domain || ""} disabled className="bg-slate-50" />
+                    <Label htmlFor="org-domain">Organization Domain</Label>
+                    <Input
+                      id="org-domain"
+                      value={orgData.domain}
+                      onChange={(e) => setOrgData({ ...orgData, domain: e.target.value })}
+                      placeholder="e.g. company.com"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -552,16 +589,26 @@ export default function SettingsPage() {
                   <Input
                     value={`${org?.memberCount || 0} members`}
                     disabled
-                    className="bg-slate-50"
+                    className="bg-slate-50 dark:bg-slate-800"
                   />
                 </div>
-                {isAdmin() && (
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => {}}>
+                <div className="flex justify-end gap-2">
+                  {isAdmin() && (
+                    <Button variant="outline" onClick={() => router.push("/team")}>
                       Manage Members
                     </Button>
-                  </div>
-                )}
+                  )}
+                  {isAdmin() && (
+                    <Button
+                      onClick={() => updateOrgMutation.mutate({ name: orgData.name, domain: orgData.domain })}
+                      isLoading={updateOrgMutation.isPending}
+                      disabled={!orgDirty || updateOrgMutation.isPending}
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Save Organization
+                    </Button>
+                  )}
+                </div>
               </div>
             </Card>
           </FadeIn>
@@ -596,10 +643,10 @@ export default function SettingsPage() {
                     variant={org?.slackConnected ? "outline" : "default"}
                     onClick={() =>
                       toast({
-                        title: org?.slackConnected ? "Slack Connected" : "Slack",
+                        title: org?.slackConnected ? "Slack Connected" : "Slack Integration",
                         description: org?.slackConnected
                           ? "Your Slack workspace is connected."
-                          : "Slack OAuth configuration required. Contact your admin to set up SLACK_CLIENT_ID and SLACK_CLIENT_SECRET in the backend .env.",
+                          : "Slack integration is coming soon. Stay tuned for updates!",
                       })
                     }
                   >
@@ -625,31 +672,6 @@ export default function SettingsPage() {
                   </div>
                   <Button variant="outline" disabled>
                     Connect
-                  </Button>
-                </div>
-
-                {/* Chrome Extension Auth Setup */}
-                <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-                      <Puzzle className="w-6 h-6 text-violet-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Chrome Extension Token</p>
-                      <p className="text-sm text-slate-500">
-                        Copy your session token to use in the Chrome extension
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={handleCopyToken}
-                  >
-                    {tokenCopied ? (
-                      <><Check className="w-4 h-4 mr-2 text-green-600" />Copied!</>
-                    ) : (
-                      <><Copy className="w-4 h-4 mr-2" />Copy Token</>
-                    )}
                   </Button>
                 </div>
               </div>

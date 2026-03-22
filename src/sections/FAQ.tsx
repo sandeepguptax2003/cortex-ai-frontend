@@ -116,10 +116,12 @@ export function FAQ() {
               Connect with us?
             </p>
             <a
-              href="#"
+              href="https://sandeepguptax2003.github.io/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-violet-600 hover:text-violet-700 font-medium"
             >
-              Reach out to our team →
+              Schedule a demo →
             </a>
           </div>
         </FadeIn>

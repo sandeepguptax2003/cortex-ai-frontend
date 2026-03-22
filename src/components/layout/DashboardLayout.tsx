@@ -147,12 +147,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-                    {user?.name
-                      ?.split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase() || "U"}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium overflow-hidden flex-shrink-0">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name || "avatar"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user?.name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase() || "U"
+                    )}
                   </div>
                   <ChevronDown className="w-4 h-4 text-slate-400" />
                 </button>

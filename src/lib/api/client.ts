@@ -1,6 +1,9 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { API_BASE_URL, ENDPOINTS } from "@/config/api";
 
+let _loggingOut = false;
+export function setLoggingOut(val: boolean) { _loggingOut = val; }
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -14,33 +17,96 @@ class ApiClient {
       withCredentials: true,
     });
 
+    // Attach stored access token as Bearer on every request.
+    // Backend accepts both cookie and Authorization header (AuthMiddleware.js line 6).
+    // This makes auth work even when cross-origin cookies are blocked.
+    this.client.interceptors.request.use((config) => {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("cortex_at");
+        if (token) {
+          config.headers.set("Authorization", `Bearer ${token}`);
+        }
+      }
+      return config;
+    });
+
+    let isRefreshing = false;
+    let failedQueue: Array<{ resolve: (v: any) => void; reject: (e: any) => void }> = [];
+
+    const processQueue = (error: any, token: string | null) => {
+      failedQueue.forEach(({ resolve, reject }) => {
+        if (error) reject(error);
+        else resolve(token);
+      });
+      failedQueue = [];
+    };
+
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
+      async (error: AxiosError) => {
         const status = error.response?.status;
         const data = error.response?.data as any;
 
-        // Extract meaningful message from backend error response
         const apiMessage =
           data?.error?.message ||
           data?.message ||
           error.message ||
           "Something went wrong";
 
-        // Handle 401 — session expired, redirect to home
+        // Try silent token refresh on 401 before giving up
         if (status === 401 && typeof window !== "undefined") {
-          const publicPaths = ["/", "/login", "/signup", "/forgot-password"];
-          const isPublicPath = publicPaths.some(
-            (p) => window.location.pathname === p
-          );
-          const isLogoutRequest =
-            (error.config?.url ?? "").includes("/auth/user/logout");
-          if (!isPublicPath && !isLogoutRequest) {
-            window.location.href = "/?session=expired";
+          const reqUrl = error.config?.url ?? "";
+          const isLogoutRequest = reqUrl.includes("/logout");
+          const isRefreshRequest = reqUrl.includes("/refresh-token");
+          const refreshToken = localStorage.getItem("cortex_rt");
+
+          if (!isLogoutRequest && !isRefreshRequest && isRefreshing) {
+            // Queue this request until the refresh completes
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            }).then((token) => {
+              error.config!.headers.set("Authorization", `Bearer ${token}`);
+              return this.client(error.config!);
+            });
+          }
+
+          if (!isLogoutRequest && !isRefreshRequest && refreshToken && !isRefreshing) {
+            isRefreshing = true;
+
+            try {
+              const refreshResponse = await this.client.post(
+                ENDPOINTS.AUTH.REFRESH_TOKEN,
+                { refreshToken },
+                { headers: { Authorization: undefined } }
+              );
+              const newAccessToken = refreshResponse.data?.data?.accessToken;
+              if (newAccessToken) {
+                localStorage.setItem("cortex_at", newAccessToken);
+                processQueue(null, newAccessToken);
+                isRefreshing = false;
+                // Retry original request with new token
+                const retryConfig = error.config!;
+                retryConfig.headers.set("Authorization", `Bearer ${newAccessToken}`);
+                return this.client(retryConfig);
+              }
+            } catch {
+              processQueue(new Error("Session expired"), null);
+              isRefreshing = false;
+              localStorage.removeItem("cortex_at");
+              localStorage.removeItem("cortex_rt");
+              const publicPaths = ["/", "/login", "/signup", "/forgot-password"];
+              const isPublicPath = publicPaths.some((p) => window.location.pathname === p);
+              if (!isPublicPath && !_loggingOut) window.location.href = "/?session=expired";
+            }
+          } else if (!isLogoutRequest && !isRefreshRequest && !refreshToken) {
+            // No refresh token at all — clear storage and redirect if on private page
+            localStorage.removeItem("cortex_at");
+            const publicPaths = ["/", "/login", "/signup", "/forgot-password"];
+            const isPublicPath = publicPaths.some((p) => window.location.pathname === p);
+            if (!isPublicPath && !_loggingOut) window.location.href = "/?session=expired";
           }
         }
 
-        // Re-throw with the real backend message so React Query onError gets it
         const enrichedError = new Error(apiMessage) as any;
         enrichedError.status = status;
         enrichedError.code = data?.error?.code;
@@ -217,8 +283,8 @@ class ApiClient {
     return response.data;
   }
 
-  async createInvite(requireDomain?: boolean) {
-    const response = await this.client.post(ENDPOINTS.INVITES.BASE, { requireDomain });
+  async createInvite(requireDomain?: boolean, invitedRole?: string) {
+    const response = await this.client.post(ENDPOINTS.INVITES.BASE, { requireDomain, invitedRole });
     return response.data;
   }
 

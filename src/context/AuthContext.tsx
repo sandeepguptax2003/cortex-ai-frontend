@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api/client";
+import { api, setLoggingOut } from "@/lib/api/client";
 import type { User, UserRole } from "@/types";
 
 interface AuthContextType {
@@ -39,7 +39,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(
-    typeof window !== "undefined" ? sessionStorage.getItem("cortex_at") : null
+    typeof window !== "undefined" ? localStorage.getItem("cortex_at") : null
   );
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -77,10 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await api.login({ email, password });
     if (response.success) {
       setUser(response.data.user);
-      // Store access token in sessionStorage for Chrome extension setup
       if (response.data.accessToken) {
-        sessionStorage.setItem("cortex_at", response.data.accessToken);
+        localStorage.setItem("cortex_at", response.data.accessToken);
         setAccessToken(response.data.accessToken);
+      }
+      if (response.data.refreshToken) {
+        localStorage.setItem("cortex_rt", response.data.refreshToken);
       }
       router.push("/dashboard");
     } else {
@@ -92,6 +94,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await api.signup(data);
     if (response.success) {
       setUser(response.data.user);
+      if (response.data.accessToken) {
+        localStorage.setItem("cortex_at", response.data.accessToken);
+        setAccessToken(response.data.accessToken);
+      }
+      if (response.data.refreshToken) {
+        localStorage.setItem("cortex_rt", response.data.refreshToken);
+      }
       router.push("/dashboard");
     } else {
       throw new Error(response.message || "Signup failed");
@@ -99,16 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    try {
-      await api.logout();
-    } catch {
-      // Swallow API errors (e.g. 429 rate-limit).
-    } finally {
-      setUser(null);
-      setAccessToken(null);
-      sessionStorage.removeItem("cortex_at");
-      router.push("/login");
-    }
+    setLoggingOut(true);
+    setUser(null);
+    setAccessToken(null);
+    localStorage.removeItem("cortex_at");
+    localStorage.removeItem("cortex_rt");
+    api.logout().catch(() => {});
+    window.location.href = "/login?logout=success";
   };
 
   const updateUser = (data: Partial<User>) => {

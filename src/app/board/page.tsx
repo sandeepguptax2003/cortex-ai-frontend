@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { api } from "@/lib/api/client";
@@ -37,12 +38,16 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
-  Loader2,
+  Edit2,
+  X,
+  Activity,
 } from "lucide-react";
+import { CortexLoader } from "@/components/ui/CortexLoader";
 import {
   getPriorityColor,
   getStatusColor,
   formatDate,
+  formatDateTime,
   getInitials,
   getDeadlineColor,
 } from "@/lib/utils";
@@ -63,13 +68,22 @@ const priorities = [
   { value: "LOW", label: "Low", color: "text-green-600" },
 ];
 
-export default function BoardPage() {
+function BoardPageContent() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [draggedTicket, setDraggedTicket] = useState<any>(null);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [editData, setEditData] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "create") {
+      setIsCreateDialogOpen(true);
+    }
+  }, [searchParams]);
 
   // Fetch tickets
   const { data: ticketsData, isLoading } = useQuery({
@@ -86,11 +100,18 @@ export default function BoardPage() {
   const tickets = ticketsData?.data?.tickets || [];
   const members = membersData?.data?.members || [];
 
+  const invalidateTicketQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    queryClient.invalidateQueries({ queryKey: ["myTickets"] });
+    queryClient.invalidateQueries({ queryKey: ["overdueTickets"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboardAnalytics"] });
+  };
+
   // Create ticket mutation
   const createTicketMutation = useMutation({
     mutationFn: (data: Parameters<typeof api.createTicket>[0]) => api.createTicket(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+      invalidateTicketQueries();
       setIsCreateDialogOpen(false);
       toast({
         variant: "success",
@@ -111,8 +132,27 @@ export default function BoardPage() {
   const updateTicketMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       api.updateTicket(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    onSuccess: (_, variables) => {
+      invalidateTicketQueries();
+      if (variables.data.status) {
+        const colLabel = columns.find((c) => c.id === variables.data.status)?.label;
+        toast({ variant: "success", title: `Moved to ${colLabel || variables.data.status}` });
+      }
+    },
+  });
+
+  // Edit save mutation
+  const saveEditMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      api.updateTicket(id, data),
+    onSuccess: (response: any) => {
+      invalidateTicketQueries();
+      const updated = response?.data?.ticket || response?.data;
+      if (updated) setSelectedTicket(updated);
+      toast({ variant: "success", title: "Ticket updated" });
+    },
+    onError: (error: any) => {
+      toast({ variant: "error", title: "Update failed", description: error.message });
     },
   });
 
@@ -154,6 +194,25 @@ export default function BoardPage() {
     setDraggedTicket(null);
   };
 
+  const openTicket = (ticket: any, e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("[data-nodrag]")) return;
+    setSelectedTicket(ticket);
+    setEditData({
+      title: ticket.title,
+      description: ticket.description || "",
+      priority: ticket.priority,
+      status: ticket.status,
+      assigneeId: ticket.assigneeId || "",
+      deadline: ticket.deadline ? ticket.deadline.substring(0, 16) : "",
+    });
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicket) return;
+    saveEditMutation.mutate({ id: selectedTicket.ticketId, data: editData });
+  };
+
   // Create ticket form
   const handleCreateTicket = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -168,13 +227,7 @@ export default function BoardPage() {
   };
 
   if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-        </div>
-      </DashboardLayout>
-    );
+    return <CortexLoader variant="page" text="Loading board..." />;
   }
 
   return (
@@ -332,8 +385,9 @@ export default function BoardPage() {
                   key={ticket.ticketId}
                   draggable
                   onDragStart={() => handleDragStart(ticket)}
+                  onClick={(e) => openTicket(ticket, e)}
                   className={cn(
-                    "bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm cursor-move hover:shadow-md transition-shadow",
+                    "bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow",
                     draggedTicket?.ticketId === ticket.ticketId && "opacity-50"
                   )}
                 >
@@ -377,6 +431,7 @@ export default function BoardPage() {
                         </div>
                       )}
                     </div>
+                    <Edit2 className="w-3.5 h-3.5 text-slate-300" />
                   </div>
                 </div>
               ))}
@@ -384,6 +439,208 @@ export default function BoardPage() {
           </div>
         ))}
       </div>
+
+      {/* Ticket Detail / Edit Dialog */}
+      {selectedTicket && editData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40" onClick={() => setSelectedTicket(null)}>
+          <div
+            className="relative h-full w-full max-w-lg bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-violet-600" />
+                <span className="font-semibold">Edit Ticket</span>
+                <span className="text-xs text-slate-400">#{selectedTicket.ticketId.slice(-6)}</span>
+              </div>
+              <button onClick={() => setSelectedTicket(null)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-5">
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editData.title}
+                  onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-desc">Description</Label>
+                <Textarea
+                  id="edit-desc"
+                  value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  rows={4}
+                  placeholder="Describe this ticket..."
+                />
+              </div>
+
+              {/* Status + Priority */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={editData.status} onValueChange={(v) => setEditData({ ...editData, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {columns.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Select value={editData.priority} onValueChange={(v) => setEditData({ ...editData, priority: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {priorities.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Assignee + Deadline */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Assignee</Label>
+                  <Select value={editData.assigneeId || "unassigned"} onValueChange={(v) => setEditData({ ...editData, assigneeId: v === "unassigned" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {members.map((m: any) => (
+                        <SelectItem key={m.userId} value={m.userId}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Deadline</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="datetime-local"
+                      value={editData.deadline}
+                      onChange={(e) => setEditData({ ...editData, deadline: e.target.value })}
+                      className="pl-9 dark:text-white dark:[color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" isLoading={saveEditMutation.isPending}>
+                Save Changes
+              </Button>
+            </form>
+
+            {/* Ticket Meta */}
+            <div className="px-6 pb-2">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500 py-3 border-t border-slate-100 dark:border-slate-800">
+                {selectedTicket.assigneeId && (
+                  <span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Assigned to: </span>
+                    {members.find((m: any) => m.userId === selectedTicket.assigneeId)?.name || selectedTicket.assigneeName || "Unknown"}
+                  </span>
+                )}
+                {selectedTicket.createdBy && (
+                  <span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Created by: </span>
+                    {members.find((m: any) => m.userId === selectedTicket.createdBy)?.name || "Unknown"}
+                  </span>
+                )}
+                <span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Created: </span>
+                  {formatDateTime(selectedTicket.createdAt)}
+                </span>
+                <span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Updated: </span>
+                  {formatDateTime(selectedTicket.updatedAt)}
+                </span>
+              </div>
+            </div>
+
+            {/* Activity Log */}
+            <div className="px-6 pb-8">
+              <div className="flex items-center gap-2 mb-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <Activity className="w-4 h-4 text-violet-600" />
+                <span className="font-semibold text-sm">Activity</span>
+              </div>
+              {(selectedTicket.activityLog?.length ?? 0) === 0 ? (
+                <p className="text-xs text-slate-400">No activity recorded.</p>
+              ) : (
+                <div className="space-y-3">
+                  {[...(selectedTicket.activityLog || [])].reverse().map((entry: any) => {
+                    const actor = members.find((m: any) => m.userId === entry.userId)?.name || "Someone";
+                    const dot =
+                      entry.action === "CREATED" || entry.action === "CREATED_BY_AI" ? "bg-green-500"
+                      : entry.action === "UPDATED" ? "bg-blue-500"
+                      : "bg-slate-400";
+
+                    let label = entry.action.replace(/_/g, " ").toLowerCase();
+                    label = label.charAt(0).toUpperCase() + label.slice(1);
+
+                    const details: string[] = [];
+                    if (entry.details?.status) {
+                      const col = columns.find((c) => c.id === entry.details.status);
+                      details.push(`Status → ${col?.label || entry.details.status}`);
+                    }
+                    if (entry.details?.priority) details.push(`Priority → ${entry.details.priority}`);
+                    if (entry.details?.assigneeId !== undefined) {
+                      const name = members.find((m: any) => m.userId === entry.details.assigneeId)?.name;
+                      details.push(`Assignee → ${name || (entry.details.assigneeId ? "Unknown" : "Unassigned")}`);
+                    }
+                    if (entry.details?.deadline !== undefined) {
+                      details.push(`Deadline → ${entry.details.deadline ? formatDate(entry.details.deadline) : "Removed"}`);
+                    }
+                    if (entry.details?.title && (entry.action === "CREATED" || entry.action === "CREATED_BY_AI")) {
+                      details.push(`"${entry.details.title}"`);
+                    }
+
+                    return (
+                      <div key={entry.id} className="flex items-start gap-3">
+                        <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+                        <div className="min-w-0">
+                          <p className="text-sm">
+                            <span className="font-medium">{actor}</span>{" "}
+                            <span className="text-slate-600 dark:text-slate-400">{label}</span>
+                          </p>
+                          {details.length > 0 && (
+                            <p className="text-xs text-slate-500 mt-0.5">{details.join(" · ")}</p>
+                          )}
+                          <p className="text-xs text-slate-400 mt-0.5">{formatDateTime(entry.timestamp)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
+  );
+}
+
+export default function BoardPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600" />
+        </div>
+      </DashboardLayout>
+    }>
+      <BoardPageContent />
+    </Suspense>
   );
 }

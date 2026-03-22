@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { api } from "@/lib/api/client";
@@ -28,7 +29,6 @@ import {
   Calendar,
   Video,
   Sparkles,
-  Loader2,
   Upload,
   FileText,
   CheckCircle2,
@@ -36,12 +36,16 @@ import {
 } from "lucide-react";
 import { formatDate, formatDuration } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { CortexLoader } from "@/components/ui/CortexLoader";
 
-export default function MeetingsPage() {
+function MeetingsPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
   const [meetingTitle, setMeetingTitle] = useState("");
   const [activeMeetingId, setActiveMeetingId] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [startDialogOpen, setStartDialogOpen] = useState(false);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
   const [transcriptTitle, setTranscriptTitle] = useState("");
   const [transcriptContent, setTranscriptContent] = useState("");
@@ -72,6 +76,7 @@ export default function MeetingsPage() {
       setActiveMeetingId(data.data.meeting.meetingId);
       setIsRecording(true);
       setElapsedTime(0);
+      setStartDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["activeMeeting"] });
       toast({
         variant: "success",
@@ -80,11 +85,25 @@ export default function MeetingsPage() {
       });
     },
     onError: (error: any) => {
-      toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to start meeting",
-      });
+      const msg = error.message || "";
+      if (msg.includes("ACTIVE_MEETING") || msg.includes("active meeting")) {
+        setStartDialogOpen(false);
+        if (activeMeeting) {
+          setActiveMeetingId(activeMeeting.meetingId);
+          setIsRecording(true);
+        }
+        toast({
+          variant: "warning",
+          title: "Meeting already active",
+          description: "You already have an active meeting in progress.",
+        });
+      } else {
+        toast({
+          variant: "error",
+          title: "Could not start meeting",
+          description: "Something went wrong. Please try again.",
+        });
+      }
     },
   });
 
@@ -137,6 +156,22 @@ export default function MeetingsPage() {
       });
     },
   });
+
+  // Auto-open start dialog from URL param — clear param immediately so back-nav doesn't re-trigger
+  useEffect(() => {
+    if (searchParams.get("action") === "start") {
+      setStartDialogOpen(true);
+      router.replace("/meetings", { scroll: false } as any);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Restore active meeting state on load
+  useEffect(() => {
+    if (activeMeeting && !isRecording) {
+      setActiveMeetingId(activeMeeting.meetingId);
+      setIsRecording(true);
+    }
+  }, [activeMeeting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Timer effect
   useEffect(() => {
@@ -253,7 +288,7 @@ export default function MeetingsPage() {
             </Dialog>
 
             {!isRecording ? (
-              <Dialog>
+              <Dialog open={startDialogOpen} onOpenChange={setStartDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="btn-shine">
                     <Video className="w-4 h-4 mr-2" />
@@ -357,7 +392,7 @@ export default function MeetingsPage() {
                     variant: "info",
                     title: "Install Chrome Extension",
                     description:
-                      "Open chrome://extensions, enable Developer Mode, then click 'Load unpacked' and select the Cortex-Chrome-Extension folder.",
+                      "Search for 'Cortex AI' on the Chrome Web Store and click 'Add to Chrome' to install.",
                   });
                 }}
               >
@@ -377,9 +412,7 @@ export default function MeetingsPage() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-            </div>
+            <CortexLoader variant="inline" className="min-h-[150px]" text="Loading meetings..." />
           ) : meetings.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -427,5 +460,19 @@ export default function MeetingsPage() {
         </Card>
       </FadeIn>
     </DashboardLayout>
+  );
+}
+
+export default function MeetingsPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600" />
+        </div>
+      </DashboardLayout>
+    }>
+      <MeetingsPageContent />
+    </Suspense>
   );
 }

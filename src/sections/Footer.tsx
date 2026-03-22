@@ -36,8 +36,8 @@ const footerLinks = {
 
 const socialLinks = [
   { icon: Twitter, href: "/404", label: "Twitter" },
-  { icon: Linkedin, href: "/404", label: "LinkedIn" },
-  { icon: Github, href: "/404", label: "GitHub" },
+  { icon: Linkedin, href: "https://www.linkedin.com/in/sandeep-gupta-a1b679263/", label: "LinkedIn" },
+  { icon: Github, href: "https://github.com/sandeepguptax2003", label: "GitHub" },
   { icon: Youtube, href: "/404", label: "YouTube" },
 ];
 
@@ -96,7 +96,7 @@ export function Footer() {
         <div className="py-6 border-t border-slate-200 dark:border-slate-800">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} Cortex AI. All rights reserved.
+              © Cortex AI. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link

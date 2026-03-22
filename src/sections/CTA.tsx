@@ -49,11 +49,11 @@ export function CTA() {
                   </button>
                 </Link>
 
-                <Link href="/demo">
+                <a href="https://sandeepguptax2003.github.io/" target="_blank" rel="noopener noreferrer">
                   <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-base font-medium h-12 px-8 border-2 border-white/40 bg-transparent text-white hover:bg-white/10 transition-all">
                     Schedule a Demo
                   </button>
-                </Link>
+                </a>
               </div>
 
               <p className="mt-6 text-sm text-white/60">

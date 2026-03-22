@@ -21,13 +21,13 @@ import {
   CheckCircle2,
   Clock,
   Calendar,
-  Loader2,
   Target,
   Zap,
   Video,
   Sparkles,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { CortexLoader } from "@/components/ui/CortexLoader";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30");
@@ -79,13 +79,7 @@ export default function AnalyticsPage() {
   ];
 
   if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-12 w-12 animate-spin text-violet-600" />
-        </div>
-      </DashboardLayout>
-    );
+    return <CortexLoader variant="page" text="Loading analytics..." />;
   }
 
   return (
@@ -137,9 +131,7 @@ export default function AnalyticsPage() {
               <h3 className="font-semibold">Ticket Trends</h3>
             </div>
             {trendsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-              </div>
+              <CortexLoader variant="inline" className="min-h-[150px]" text="Fetching trends..." />
             ) : trends.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />

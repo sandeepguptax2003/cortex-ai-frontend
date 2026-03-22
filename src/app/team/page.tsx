@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/Label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -49,18 +51,21 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react";
+import { CortexLoader } from "@/components/ui/CortexLoader";
 import { formatDate, getInitials } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export default function TeamPage() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [requireDomain, setRequireDomain] = useState(false);
+  const [invitedRole, setInvitedRole] = useState("MEMBER");
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [generatedInviteUrl, setGeneratedInviteUrl] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [adminTransferTarget, setAdminTransferTarget] = useState<{ userId: string; name: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user, canAccessAdmin } = useAuth();
+  const { user, canAccessAdmin, canAccessManager } = useAuth();
 
   // Fetch team members
   const { data: membersData, isLoading: membersLoading } = useQuery({
@@ -86,7 +91,7 @@ export default function TeamPage() {
 
   // Create invite mutation
   const createInviteMutation = useMutation({
-    mutationFn: () => api.createInvite(requireDomain),
+    mutationFn: () => api.createInvite(requireDomain, invitedRole),
     onSuccess: (response: any) => {
       queryClient.invalidateQueries({ queryKey: ["invites"] });
       const inviteUrl = response?.data?.inviteUrl || response?.inviteUrl;
@@ -208,7 +213,7 @@ export default function TeamPage() {
             <h1 className="text-2xl font-bold">Team</h1>
             <p className="text-slate-500">Manage your team members and invites</p>
           </div>
-          {canAccessAdmin() && (
+          {canAccessManager() && (
             <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
                 setInviteDialogOpen(open);
                 if (!open) { setGeneratedInviteUrl(null); setInviteCopied(false); }
@@ -224,6 +229,18 @@ export default function TeamPage() {
                   <DialogTitle className="text-slate-900 dark:text-slate-100">Invite Team Member</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Role for invited member</Label>
+                    <Select value={invitedRole} onValueChange={setInvitedRole}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MEMBER">Member</SelectItem>
+                        <SelectItem value="MANAGER">Manager</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="flex items-center space-x-3">
                     <div className="relative flex items-center">
                       <input
@@ -351,9 +368,7 @@ export default function TeamPage() {
           </div>
           <div className="p-6">
             {membersLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-              </div>
+              <CortexLoader variant="inline" className="min-h-[150px]" text="Loading members..." />
             ) : members.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -405,17 +420,16 @@ export default function TeamPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() =>
-                                updateRoleMutation.mutate({
-                                  userId: member.userId,
-                                  role: "ADMIN",
-                                })
-                              }
-                            >
-                              <Crown className="w-4 h-4 mr-2" />
-                              Make Admin
-                            </DropdownMenuItem>
+                            {user?.role === "ADMIN" && member.role !== "ADMIN" && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setAdminTransferTarget({ userId: member.userId, name: member.name })
+                                }
+                              >
+                                <Crown className="w-4 h-4 mr-2" />
+                                Transfer Admin
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() =>
                                 updateRoleMutation.mutate({
@@ -460,7 +474,7 @@ export default function TeamPage() {
       </FadeIn>
 
       {/* Pending Invites */}
-      {canAccessAdmin() && (
+      {canAccessManager() && (
         <FadeIn direction="up" delay={300}>
           <Card>
             <div className="p-6 border-b border-slate-200 dark:border-slate-800">
@@ -471,9 +485,7 @@ export default function TeamPage() {
             </div>
             <div className="p-6">
               {invitesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-                </div>
+                <CortexLoader variant="inline" className="min-h-[100px]" text="Loading invites..." />
               ) : invites.filter((i: any) => i.status === "PENDING").length ===
                 0 ? (
                 <div className="text-center py-8 text-slate-500">
@@ -536,6 +548,40 @@ export default function TeamPage() {
           </Card>
         </FadeIn>
       )}
+
+      {/* Admin Transfer Confirmation */}
+      <Dialog open={!!adminTransferTarget} onOpenChange={(open) => { if (!open) setAdminTransferTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transfer Admin Rights</DialogTitle>
+            <DialogDescription>
+              You are about to make <strong>{adminTransferTarget?.name}</strong> the new Admin.
+              You will be automatically demoted to Manager and lose admin privileges.
+              This action cannot be undone without the new admin's help.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdminTransferTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              isLoading={updateRoleMutation.isPending}
+              onClick={() => {
+                if (adminTransferTarget) {
+                  updateRoleMutation.mutate(
+                    { userId: adminTransferTarget.userId, role: "ADMIN" },
+                    { onSuccess: () => setAdminTransferTarget(null) }
+                  );
+                }
+              }}
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Confirm Transfer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
